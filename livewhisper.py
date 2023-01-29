@@ -3,21 +3,24 @@ import whisper, os
 import numpy as np
 import sounddevice as sd
 from scipy.io.wavfile import write
+import time
 
 # This is my attempt to make psuedo-live transcription of speech using Whisper.
 # Since my system can't use pyaudio, I'm using sounddevice instead.
 # This terminal implementation can run standalone or imported for assistant.py
 # by Nik Stromberg - nikorasu85@gmail.com - MIT 2022 - copilot
 
-Model = 'tiny'      # Whisper model size (tiny, base, small, medium, large)
+Model = 'base'      # Whisper model size (tiny, base, small, medium, large)
 English = False     # Use English-only model?
 Translate = False   # Translate non-English to English?
 AudioDevice= "MPOW HC6"     # specify audio device if it is not the default
 SampleRate = 44100  # Stream device recording frequency
 BlockSize = 30      # Block size in milliseconds
-Threshold = 0.05     # Minimum volume threshold to activate listening
+Threshold = 0.03    # Minimum volume threshold to activate listening
 Vocals = [50, 1000] # Frequency range to detect sounds that could be speech
 EndBlocks = 40      # Number of blocks to wait before sending to Whisper
+Echo = False        # Echo audio so that one can check the audio quality that whisper hears
+
 
 class StreamHandler:
     def __init__(self, assist=None):
@@ -59,6 +62,8 @@ class StreamHandler:
                 self.buffer = np.concatenate((self.buffer, indata))
             elif self.padding < 1 < self.buffer.shape[0] > SampleRate: # if enough silence has passed, write to file.
                 self.fileready = True
+                if Echo:
+                    sd.play(self.buffer,SampleRate)
                 write('dictate.wav', SampleRate, self.buffer) # I'd rather send data to Whisper directly..
                 self.buffer = np.zeros((0,1))
             elif self.padding < 1 < self.buffer.shape[0] < SampleRate: # if recording not long enough, reset buffer.
@@ -74,8 +79,10 @@ class StreamHandler:
                 result = self.model.transcribe('dictate.wav',fp16=False,language='en' if English else '',task='translate' if Translate else 'transcribe')
                 print(f"\033[1A\033[2K\033[0G{result['text']}")
             else:
+                start_time = time.time()
                 result = self.model.transcribe('dictate.wav',fp16=False, task='translate' if Translate else 'transcribe')
-                print(f"\033[1A\033[2K\033[0G{result['text']} ({result['language']})")
+                elapsed_time = time.time() - start_time
+                print(f"\033[1A\033[2K\033[0G{result['text']} ({result['language']}, {elapsed_time:1.2}s)")
             if self.asst.analyze != None: self.asst.analyze(result['text'])
             self.fileready = False
 
