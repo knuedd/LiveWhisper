@@ -9,8 +9,8 @@ from scipy.io.wavfile import write
 # This terminal implementation can run standalone or imported for assistant.py
 # by Nik Stromberg - nikorasu85@gmail.com - MIT 2022 - copilot
 
-Model = 'small'     # Whisper model size (tiny, base, small, medium, large)
-English = True      # Use English-only model?
+Model = 'base'      # Whisper model size (tiny, base, small, medium, large)
+English = False     # Use English-only model?
 Translate = False   # Translate non-English to English?
 AudioDevice= ""     # specify audio device if it is not the default
 SampleRate = 44100  # Stream device recording frequency
@@ -70,8 +70,12 @@ class StreamHandler:
     def process(self):
         if self.fileready:
             print("\n\033[90mTranscribing..\033[0m")
-            result = self.model.transcribe('dictate.wav',fp16=False,language='en' if English else '',task='translate' if Translate else 'transcribe')
-            print(f"\033[1A\033[2K\033[0G{result['text']}")
+            if English:
+                result = self.model.transcribe('dictate.wav',fp16=False,language='en' if English else '',task='translate' if Translate else 'transcribe')
+                print(f"\033[1A\033[2K\033[0G{result['text']}")
+            else:
+                result = self.model.transcribe('dictate.wav',fp16=False, task='translate' if Translate else 'transcribe')
+                print(f"\033[1A\033[2K\033[0G{result['text']} ({result['language']})")
             if self.asst.analyze != None: self.asst.analyze(result['text'])
             self.fileready = False
 
