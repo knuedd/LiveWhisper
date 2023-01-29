@@ -12,6 +12,7 @@ from scipy.io.wavfile import write
 Model = 'small'     # Whisper model size (tiny, base, small, medium, large)
 English = True      # Use English-only model?
 Translate = False   # Translate non-English to English?
+AudioDevice= ""     # specify audio device if it is not the default
 SampleRate = 44100  # Stream device recording frequency
 BlockSize = 30      # Block size in milliseconds
 Threshold = 0.1     # Minimum volume threshold to activate listening
@@ -28,6 +29,11 @@ class StreamHandler:
         self.padding = 0
         self.prevblock = self.buffer = np.zeros((0,1))
         self.fileready = False
+        if AudioDevice:
+            sd.default.device= AudioDevice
+            print("\033[96mUsing audio device:\033[0m", AudioDevice)
+        else:
+            print("\033[96mUsing default audio device for recording\033[0m")
         print("\033[96mLoading Whisper Model..\033[0m", end='', flush=True)
         self.model = whisper.load_model(f'{Model}{".en" if English else ""}')
         print("\033[90m Done.\033[0m")
