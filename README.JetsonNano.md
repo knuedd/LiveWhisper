@@ -2,6 +2,11 @@
 
 ## Proper image
 
+Use this updated OS image for the NVIDIA JetsonNano, 
+https://github.com/Qengineering/Jetson-Nano-Ubuntu-20-image
+
+You may consider overcclocking according to https://qengineering.eu/overclocking-the-jetson-nano.html
+
 
 ## Install
 
